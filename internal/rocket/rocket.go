@@ -16,6 +16,8 @@ const (
 	DefaultFuel      = 3.0e4     // kg — zapas paliwana hamowanie, nie pełny tank
 	DefaultMaxThrust = 3 * 2.3e6 // N — ~3 × Raptor
 	DefaultIsp       = 330.0     // s — ile ciągu z 1 kg paliwa (Raptor, atmosfera)
+	DefaultCatchTolY     = 0.5 // m — |Y - TowerHeight|
+	DefaultCatchMaxSpeed = 1.0 // m/s — |Vel.Y|
 )
 
 // Rocket to stan rakiety w symulacji 2D (jednostki SI).
@@ -66,7 +68,7 @@ func (r *Rocket) Mass() float64 {
 
 // Alive zwraca true, gdy rakieta jest na ziemi lub powyżej (Y >= 0).
 func (r *Rocket) Alive() bool {
-	return r.Pos.Y >= 0
+	return r.Pos.Y > 0
 }
 
 // Step symuluje kolejny krok symulacji.
