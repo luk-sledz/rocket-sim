@@ -5,18 +5,16 @@ import (
 	"rocket-sim/internal/vec"
 )
 
-const G = 9.81
-
-// TowerHeight to wysokość ramion wieży chwytającej [m] (cel catch, nie ziemia).
-const TowerHeight = 90.0
-
 // Domyślne parametry (Starship przy lądowaniu, ~3 Raptory).
 const (
+	G = 9.81
 	DefaultDryMass   = 1.2e5     // kg (~120 t)
 	DefaultFuel      = 3.0e4     // kg — zapas paliwana hamowanie, nie pełny tank
 	DefaultMaxThrust = 3 * 2.3e6 // N — ~3 × Raptor
 	DefaultIsp       = 330.0     // s — ile ciągu z 1 kg paliwa (Raptor, atmosfera)
-	DefaultCatchTolY     = 0.5 // m — |Y - TowerHeight|
+	TowerHeight = 90.0 // wysokość ramion wieży chwytającej [m] 
+	DefaultCatchTolY     = 0.5 // zakres tolerancji w Y podczas catch
+	DefaultCatchTolX     = 0.5 // zakres tolerancji w X podczas catch
 	DefaultCatchMaxSpeed = 1.0 // m/s — |Vel.Y|
 )
 
@@ -29,6 +27,7 @@ type Rocket struct {
 	MaxThrust float64  // maksymalny ciąg [N], w górę (+Y)
 	Isp       float64  // impuls właściwy [s]
 	Throttle  float64  // zadanie ciągu w [0, 1]
+	Angle     float64  // kąt nachylenia rakiety [rad]
 }
 
 // New tworzy rakietę. dryMass, Isp > 0; ujemne Fuel/MaxThrust są niedozwolone.
@@ -53,6 +52,7 @@ func New(pos, vel vec.Vec2, dryMass, fuel, maxThrust, isp float64) *Rocket {
 		MaxThrust: maxThrust,
 		Isp:       isp,
 		Throttle:  0, // start z wyłączonym silnikiem
+		Angle:     0, // start rakieta pionowo
 	}
 }
 
@@ -88,9 +88,11 @@ func (r *Rocket) Step(dt float64) {
 	if r.Fuel <= 0 {
 		thrust = 0
 	}
-	// Tymczasowo pionowe siły
+	
 	m := r.Mass()
-	force := vec.Vec2{X: 0, Y: thrust - m*G} // ciąg w górę, ciężar w dół
+	fx := thrust * math.Sin(r.Angle)
+	fy := thrust * math.Cos(r.Angle)
+	force := vec.Vec2{X: fx, Y: fy - m*G} // rozkład sił w zależności od kąta nachylenia
 	a := force.Scale(1 / m)                   // a = F/m
 	r.Vel = r.Vel.Add(a.Scale(dt))
 	r.Pos = r.Pos.Add(r.Vel.Scale(dt))
@@ -111,11 +113,13 @@ func (r *Rocket) Step(dt float64) {
 }
 // Caught zwraca true, gdy rakieta jest w oknie chwytu ramion wieży.
 // tolY — tolerancja wysokości [m], maxSpeed — max |Vel.Y| [m/s].
-func (r *Rocket) Caught(tolY, maxSpeed float64) bool {
+func (r *Rocket) Caught(tolX, tolY, maxSpeed float64) bool {
 	if !r.Alive() {
 		return false
 	}
-	nearHeight := math.Abs(r.Pos.Y-TowerHeight) <= tolY
-	slowEnough := math.Abs(r.Vel.Y) <= maxSpeed
-	return nearHeight && slowEnough
+	nearX := math.Abs(r.Pos.X) <= tolX
+	nearY := math.Abs(r.Pos.Y-TowerHeight) <= tolY
+	slowX := math.Abs(r.Vel.X) <= maxSpeed
+	slowY := math.Abs(r.Vel.Y) <= maxSpeed
+	return nearX && nearY && slowX && slowY
 }

@@ -11,7 +11,7 @@ func TestAltitudeSoftCatch(t *testing.T) {
 		r.Throttle = AltitudeThrottle(r.Pos.Y, r.Vel.Y, rocket.TowerHeight, r.Mass(), r.MaxThrust, dt)
 		r.Step(dt)
 	}
-	if !r.Caught(5, 2) {
+	if !r.Caught(5, 5, 2) {
 		t.Fatalf("Y=%.1f Vel.Y=%.2f", r.Pos.Y, r.Vel.Y)
 	}
 }
