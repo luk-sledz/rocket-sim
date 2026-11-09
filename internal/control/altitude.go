@@ -1,4 +1,5 @@
 package control
+import "math"
 
 const (
 	DefaultKp            = 0.02  // ile „dokręcić” Throttle na 1 m błędu
@@ -19,9 +20,9 @@ func clamp01(x float64) float64 {
 
 // AltitudeThrottle liczy zadanie ciągu dla jednej pętli wysokości.
 // posY, velY — stan; target — np. 90 m; dt — na razie nieużywane.
-func AltitudeThrottle(posY, velY, target, mass, maxThrust, dt float64) float64 {
+func AltitudeThrottle(posY, velY, target, mass, maxThrust, angle, dt float64) float64 {
 	_ = dt
-	hover := mass * g / maxThrust
+	hover := mass * g / (maxThrust * math.Cos(angle))
 	err := target - posY
 	u := hover + DefaultKp*err - DefaultKd*velY
 	return clamp01(u)
