@@ -15,7 +15,7 @@ func TestLateralSoftCatch(t *testing.T) {
 			r.Mass(), r.MaxThrust, r.Angle, dt,
 		)
 		desiredVx := LateralDesiredVx(r.Pos.X)
-		r.Angle = LateralAngleFromVx(r.Vel.X, desiredVx)
+		r.AngleCmd = LateralAngleFromVx(r.Vel.X, desiredVx)
 		r.Step(dt)
 		if r.Caught(5, 5, 2) {
 			return 

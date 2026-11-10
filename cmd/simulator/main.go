@@ -21,7 +21,7 @@ func main() {
 			r.Mass(), r.MaxThrust, r.Angle, dt,
 		)
 		desiredVx := control.LateralDesiredVx(r.Pos.X)
-		r.Angle = control.LateralAngleFromVx(r.Vel.X, desiredVx)
+		r.AngleCmd = control.LateralAngleFromVx(r.Vel.X, desiredVx)
 		r.Step(dt)
 		t += dt
 		// log co 0.5 s

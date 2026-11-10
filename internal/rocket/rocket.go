@@ -16,6 +16,8 @@ const (
 	DefaultCatchTolY     = 0.5 // zakres tolerancji w Y podczas catch
 	DefaultCatchTolX     = 0.5 // zakres tolerancji w X podczas catch
 	DefaultCatchMaxSpeed = 1.0 // m/s — |Vel.Y|
+	DefaultAngleTau = 0.2 // s — czas regulacji kąta
+	DefaultMaxAngularRate = 1.0 // rad/s — maksymalna prędkość kątowa
 )
 
 // Rocket to stan rakiety w symulacji 2D (jednostki SI).
@@ -28,9 +30,21 @@ type Rocket struct {
 	Isp       float64  // impuls właściwy [s]
 	Throttle  float64  // zadanie ciągu w [0, 1]
 	Angle     float64  // kąt nachylenia rakiety [rad]
+	AngleCmd  float64  // kąt nachylenia rakiety żądany [rad]
+	AngularVel float64 // prędkość kątowa rakiety [rad/s]
 }
 
-// New tworzy rakietę. dryMass, Isp > 0; ujemne Fuel/MaxThrust są niedozwolone.
+func clamp(x, lo, hi float64) float64 {
+	if x < lo {
+		return lo
+	}
+	if x > hi {
+		return hi
+	}
+	return x
+}
+
+// New tworzy rakietę. + sprawdza poprawność parametrów.
 func New(pos, vel vec.Vec2, dryMass, fuel, maxThrust, isp float64) *Rocket {
 	if dryMass <= 0 {
 		panic("rocket: dryMass musi być > 0")
@@ -66,7 +80,7 @@ func (r *Rocket) Mass() float64 {
 	return r.DryMass + r.Fuel
 }
 
-// Alive zwraca true, gdy rakieta jest na ziemi lub powyżej (Y >= 0).
+// Alive zwraca true, gdy rakieta nad ziemią.
 func (r *Rocket) Alive() bool {
 	return r.Pos.Y > 0
 }
@@ -77,6 +91,11 @@ func (r *Rocket) Step(dt float64) {
 		return
 	}
 
+	// 1) postawa: Angle dogania AngleCmd 
+	omegaCmd := (r.AngleCmd - r.Angle) / DefaultAngleTau
+	r.AngularVel = clamp(omegaCmd, -DefaultMaxAngularRate, DefaultMaxAngularRate)
+	r.Angle += r.AngularVel * dt
+	
 	th := r.Throttle
 	if th < 0 {
 		th = 0
