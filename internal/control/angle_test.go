@@ -16,6 +16,7 @@ func TestLateralSoftCatch(t *testing.T) {
 		)
 		desiredVx := LateralDesiredVx(r.Pos.X)
 		r.AngleCmd = LateralAngleFromVx(r.Vel.X, desiredVx)
+		r.GimbalCmd = AttitudeGimbal(r.Angle, r.AngleCmd, r.AngularVel)
 		r.Step(dt)
 		if r.Caught(5, 5, 2) {
 			return 
@@ -49,5 +50,21 @@ func TestLateralAngleFromVx(t *testing.T) {
 	// Czy saturowanie działa
 	if a := LateralAngleFromVx(100, 0); a != -DefaultMaxTilt {
 		t.Fatalf("duży błąd → Angle=%v, oczekiwane %v", a, -DefaultMaxTilt)
+	}
+}
+
+
+func TestAttitudeGimbal(t *testing.T) {
+	// chcę kąt większy niż mam → dodatni gimbal
+	if g := AttitudeGimbal(0, 0.1, 0); g <= 0 {
+		t.Fatalf("AngleCmd>Angle → Gimbal>0, jest %v", g)
+	}
+	// saturacja
+	if g := AttitudeGimbal(0, 1.0, 0); g != DefaultMaxGimbalAngle {
+		t.Fatalf("duży błąd → %v, oczekiwane %v", g, DefaultMaxGimbalAngle)
+	}
+	// człon D: przy celu, ale ω>0 → ujemny gimbal (gasi obrót)
+	if g := AttitudeGimbal(0.1, 0.1, 0.5); g >= 0 {
+		t.Fatalf("ω>0 przy err=0 → Gimbal<0, jest %v", g)
 	}
 }

@@ -54,7 +54,8 @@ func TestStepThrustAngled(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{})
 	r.Throttle = 1
 	r.Angle = math.Pi / 2 //ciąg w +X
-	r.AngleCmd = math.Pi / 2
+	r.GimbalAngle = 0
+	r.AngularVel = 0
 	for i := 0; i < 100; i++ {
 		r.Step(0.01)
 	}
@@ -63,37 +64,47 @@ func TestStepThrustAngled(t *testing.T) {
 	}
 }
 
-// testuje, czy kąt rakiety dogoni żądany kąt
-func TestStepAngleTracksCmd(t *testing.T) {
+//testuje znak momentu siły od wychylonego ciągu
+func TestStepGimbalTorqueSign(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{})
+	r.Throttle = 1
 	r.Angle = 0
-	r.AngleCmd = 0.1 // małe żądanie — poniżej limitu rate
-	for i := 0; i < 300; i++ { // 3 s
+	r.AngularVel = 0
+	r.GimbalCmd = 0.1
+	r.GimbalAngle = 0.1
+	for i := 0; i < 50; i++ {
 		r.Step(0.01)
 	}
-	err := math.Abs(r.Angle - r.AngleCmd)
-	if err > 0.02 {
-		t.Fatalf("Angle nie dogonił AngleCmd: Angle=%v AngleCmd=%v err=%v",
-			r.Angle, r.AngleCmd, err)
-	}
-	if math.Abs(r.AngularVel) > 0.05 {
-		t.Fatalf("przy celu AngularVel powinno być małe, jest %v", r.AngularVel)
+	if r.AngularVel <= 0 || r.Angle <= 0 {
+		t.Fatalf("+gimbal powinno dać +ω i +Angle; ω=%v Angle=%v",
+			r.AngularVel, r.Angle)
 	}
 }
 
-// testuje, czy prędkość kątowa rakiety jest ograniczona
-func TestStepAngularRateLimit(t *testing.T) {
+//testuje czy rakieta nie obraca się gdy gimbal jest 0
+func TestStepZeroGimbalNoTorque(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{})
-	r.Angle = 0
-	r.AngleCmd = 1.0 // duży skok → omegaCmd = 1/0.2 = 5 > MaxRate
+	r.Throttle = 1
+	r.Angle = 0.05
+	r.AngularVel = 0
+	angle0 := r.Angle
+	r.GimbalCmd = 0
+	r.GimbalAngle = 0
 	r.Step(0.01)
-	if math.Abs(r.AngularVel) > DefaultMaxAngularRate+1e-9 {
-		t.Fatalf("|AngularVel|=%v przekroczyło MaxRate=%v",
-			r.AngularVel, DefaultMaxAngularRate)
+	if math.Abs(r.Angle-angle0) > 1e-12 || math.Abs(r.AngularVel) > 1e-12 {
+		t.Fatalf("gimbal=0, ω=0 → brak obrotu; Angle=%v ω=%v", r.Angle, r.AngularVel)
 	}
-	// przy takim skoku powinno siedzieć na limicie
-	if math.Abs(r.AngularVel-DefaultMaxAngularRate) > 1e-9 {
-		t.Fatalf("oczekiwane AngularVel=%v, jest %v",
-			DefaultMaxAngularRate, r.AngularVel)
+}
+
+// testuje czy przesunięcie gimbala jest ograniczone 
+func TestStepGimbalRateLimit(t *testing.T) {
+	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{})
+	r.GimbalAngle = 0
+	r.GimbalCmd = 0.20 // skok na max
+	dt := 0.01
+	r.Step(dt)
+	maxDelta := DefaultMaxGimbalRate * dt // 0.01
+	if math.Abs(r.GimbalAngle-maxDelta) > 1e-12 { // 
+		t.Fatalf("oczekiwane GimbalAngle=%v, jest %v", maxDelta, r.GimbalAngle)
 	}
 }
