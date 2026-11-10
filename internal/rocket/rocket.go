@@ -113,7 +113,7 @@ func (r *Rocket) Step(dt float64) {
 	}
 
 	// 1a) GimbalAngle dogania GimbalCmd z limitem rate
-	gimbalCmd := clamp(r.GimbalCmd, -DefaultMaxGimbalAngle,  //ograniczenie żądanego kąta gimbala do max i min
+	gimbalCmd := clamp(r.GimbalCmd, -DefaultMaxGimbalAngle, DefaultMaxGimbalAngle) //ograniczenie żądanego kąta gimbala do max i min
 	maxDelta := DefaultMaxGimbalRate * dt // maksymalny przyrost kąta gimbala w jednym kroku
 	delta := gimbalCmd - r.GimbalAngle // błąd kąta gimbala
 	if delta > maxDelta {
