@@ -20,6 +20,9 @@ const (
 	DefaultLeverArm       = 15.0      // m — długość od środka masy do dyszy
 	DefaultMaxGimbalAngle = 0.20      // rad ≈ 11.5° — limit kąta gimbala
 	DefaultMaxGimbalRate  = 1.0       // rad/s prędkość maksymalna gimbala
+	AirDensity      = 1.225 // kg/m³ — ρ na poziomie morza, stałe
+    DefaultDragCd   = 1.0   // współczynnik oporu (lot ogonem w dół)
+    DefaultDragArea = 63.6  // m² — przekrój ≈ π·(4.5 m)²
 )
 
 // Rocket to stan rakiety w symulacji 2D (jednostki SI).
@@ -38,6 +41,8 @@ type Rocket struct {
 	Inertia     float64  // I
 	LeverArm    float64  // L — dźwignia od środka masy do dyszy
 	GimbalCmd   float64  // żądany kąt gimbala [rad]
+	DragCd   float64 // współczynnik oporu Cd
+	DragArea float64 // powierzchnia odniesienia A [m²]
 }
 
 func clamp(x, lo, hi float64) float64 {
@@ -76,6 +81,8 @@ func New(pos, vel vec.Vec2, dryMass, fuel, maxThrust, isp float64) *Rocket {
 		Angle:     0, // start rakieta pionowo
 		Inertia:   DefaultInertia,
 		LeverArm:  DefaultLeverArm,
+		DragCd:    DefaultDragCd,
+		DragArea:  DefaultDragArea,
 	}
 }
 
@@ -92,6 +99,13 @@ func (r *Rocket) Mass() float64 {
 // Alive zwraca true, gdy rakieta nad ziemią.
 func (r *Rocket) Alive() bool {
 	return r.Pos.Y > 0
+}
+
+// DragForce zwraca siłę oporu powietrza [N], przeciwną do Vel:
+// F = −½·ρ·Cd·A·|v|·v
+func (r *Rocket) DragForce() vec.Vec2 {
+	k := 0.5 * AirDensity * r.DragCd * r.DragArea
+	return r.Vel.Scale(-k * r.Vel.Len())
 }
 
 // Step symuluje kolejny krok symulacji.
@@ -136,6 +150,7 @@ func (r *Rocket) Step(dt float64) {
 	fx := thrust * math.Sin(r.Angle+gimbalAngle)
 	fy := thrust * math.Cos(r.Angle+gimbalAngle)
 	force := vec.Vec2{X: fx, Y: fy - m*G} // rozkład sił w zależności od kąta nachylenia
+	force = force.Add(r.DragForce())      // + opór powietrza (środek masy, bez momentu) wektorowo
 	a := force.Scale(1 / m)               // a = F/m
 	r.Vel = r.Vel.Add(a.Scale(dt))
 	r.Pos = r.Pos.Add(r.Vel.Scale(dt))

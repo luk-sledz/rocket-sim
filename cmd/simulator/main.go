@@ -28,8 +28,8 @@ func main() {
 		// log co 0.5 s
 		step := int(t/dt + 0.5)
 		if step%50 == 0 {
-			fmt.Printf("t=%5.1fs  X=%7.1f  Y=%7.1f  Vx=%6.2f  Vy=%6.2f  thr=%.2f  fuel=%.0f  angle=%.2f  gimbal=%.2f\n",
-				t, r.Pos.X, r.Pos.Y, r.Vel.X, r.Vel.Y, r.Throttle, r.Fuel, r.Angle, r.GimbalAngle)
+			fmt.Printf("t=%5.1fs  X=%7.1f  Y=%7.1f  Vx=%6.2f  Vy=%6.2f  thr=%.2f  fuel=%.0f  angle=%.2f  gimbal=%.2f drag=%.2f\n",
+				t, r.Pos.X, r.Pos.Y, r.Vel.X, r.Vel.Y, r.Throttle, r.Fuel, r.Angle, r.GimbalAngle, r.DragForce().Len())
 		}
 		if r.Caught(rocket.DefaultCatchTolX, rocket.DefaultCatchTolY, rocket.DefaultCatchMaxSpeed) {
 			fmt.Printf("CAUGHT @ t=%.1fs  X=%.2f  Y=%.2f  Vx=%.2f  Vy=%.2f  angle=%.2f\n", t, r.Pos.X, r.Pos.Y, r.Vel.X, r.Vel.Y, r.Angle)

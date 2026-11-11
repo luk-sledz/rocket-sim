@@ -108,3 +108,21 @@ func TestStepGimbalRateLimit(t *testing.T) {
 		t.Fatalf("oczekiwane GimbalAngle=%v, jest %v", maxDelta, r.GimbalAngle)
 	}
 }
+
+// testuje czy przy Vel=0 siła oporu jest dokładnie zerowa
+func TestDragForceZeroVel(t *testing.T) {
+	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{}) //zerowy wektor prędkości
+	f := r.DragForce()
+	if f.X != 0 || f.Y != 0 {
+		t.Fatalf("Vel=0 → DragForce powinno być {0,0}, jest %v", f)
+	}
+}
+
+// testuje znak i wartość DragForce przy Vel≠0
+func TestDragForceOpposesVel(t *testing.T) {
+	r := NewStarship(vec.Vec2{Y: 1000}, vec.Vec2{X: 30, Y: -100})
+	f := r.DragForce()
+	if f.X >= 0 || f.Y <= 0 {
+		t.Fatalf("drag powinien być przeciwny do Vel; F=%v Vel=%v", f, r.Vel)
+	}
+}
