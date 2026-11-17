@@ -109,20 +109,48 @@ func TestStepGimbalRateLimit(t *testing.T) {
 	}
 }
 
-// testuje czy przy Vel=0 siła oporu jest dokładnie zerowa
-func TestDragForceZeroVel(t *testing.T) {
+// testuje czy przy Vel=0 siła aero jest dokładnie zerowa
+func TestAeroForceZeroVel(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{}) //zerowy wektor prędkości
-	f := r.DragForce()
+	f := r.AeroForce()
 	if f.X != 0 || f.Y != 0 {
-		t.Fatalf("Vel=0 → DragForce powinno być {0,0}, jest %v", f)
+		t.Fatalf("Vel=0 → AeroForce powinno być {0,0}, jest %v", f)
 	}
 }
 
-// testuje znak i wartość DragForce przy Vel≠0
-func TestDragForceOpposesVel(t *testing.T) {
+// testuje znak AeroForce przy Vel≠0 (Cl=0 → przeciwny do Vel)
+func TestAeroForceOpposesVel(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 1000}, vec.Vec2{X: 30, Y: -100})
-	f := r.DragForce()
+	f := r.AeroForce()
 	if f.X >= 0 || f.Y <= 0 {
-		t.Fatalf("drag powinien być przeciwny do Vel; F=%v Vel=%v", f, r.Vel)
+		t.Fatalf("aero powinno być przeciwne do Vel; F=%v Vel=%v", f, r.Vel)
+	}
+}
+
+// TestDragCoeffVsAttack: przy tym samym |Vel| bok (α≈π/2) → większy |AeroForce| niż lot osiowy.
+func TestDragCoeffVsAttack(t *testing.T) {
+	const speed = 80.0
+
+	// osiowo: Angle=0, Vel w dół → α=π → Cd≈Cd0
+	axial := NewStarship(vec.Vec2{Y: 1000}, vec.Vec2{Y: -speed})
+	axial.Angle = 0
+
+	// bok: Angle=0, Vel w +X → α=π/2 → Cd≈Cd90
+	side := NewStarship(vec.Vec2{Y: 1000}, vec.Vec2{X: speed})
+	side.Angle = 0
+
+	cdAxial := axial.DragCoeff()
+	cdSide := side.DragCoeff()
+	if math.Abs(cdAxial-DefaultDragCd) > 1e-9 {
+		t.Fatalf("osiowo Cd=%v, oczekiwane %v", cdAxial, DefaultDragCd)
+	}
+	if math.Abs(cdSide-DefaultDragCd90) > 1e-9 {
+		t.Fatalf("bok Cd=%v, oczekiwane %v", cdSide, DefaultDragCd90)
+	}
+
+	fAxial := axial.AeroForce().Len()
+	fSide := side.AeroForce().Len()
+	if fSide <= fAxial {
+		t.Fatalf("bok powinien dawać większą |F|; osiowo=%v bok=%v", fAxial, fSide)
 	}
 }
