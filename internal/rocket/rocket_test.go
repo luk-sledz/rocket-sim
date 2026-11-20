@@ -154,3 +154,36 @@ func TestDragCoeffVsAttack(t *testing.T) {
 		t.Fatalf("bok powinien dawać większą |F|; osiowo=%v bok=%v", fAxial, fSide)
 	}
 }
+
+// TestLiftCoeffVsAttack: Cl=0 na krańcach; max przy α=π/4; Fl w +X przy tym setupie.
+func TestLiftCoeffVsAttack(t *testing.T) {
+	const speed = 80.0
+	wantMax := 0.5 * (DefaultDragCd90 - DefaultDragCd)
+
+	// α=π (dziób +Y, Vel w dół) → Cl=0
+	axial := NewStarship(vec.Vec2{Y: 1000}, vec.Vec2{Y: -speed})
+	axial.Angle = 0
+	if cl := axial.LiftCoeff(); math.Abs(cl) > 1e-9 {
+		t.Fatalf("α=π → Cl≈0, jest %v", cl)
+	}
+
+	// α=π/2 (dziób +Y, Vel w +X) → Cl=0
+	side := NewStarship(vec.Vec2{Y: 1000}, vec.Vec2{X: speed})
+	side.Angle = 0
+	if cl := side.LiftCoeff(); math.Abs(cl) > 1e-9 {
+		t.Fatalf("α=π/2 → Cl≈0, jest %v", cl)
+	}
+
+	// α=π/4 (Angle=π/4, Vel w −Y) → Cl = +½(Cd90−Cd0)
+	lift := NewStarship(vec.Vec2{Y: 1000}, vec.Vec2{Y: -speed})
+	lift.Angle = math.Pi / 4
+	if cl := lift.LiftCoeff(); math.Abs(cl-(-wantMax)) > 1e-9 {
+		t.Fatalf("α=π/4 → Cl=%v, oczekiwane %v", cl, wantMax)
+	}
+
+	// znak Fl: û_vel≈(0,-1), û_perp≈(+1,0), Cl>0 → wkład liftu w +X
+	f := lift.AeroForce()
+	if f.X >= 0 {
+		t.Fatalf("oczekiwane Fx<0; F=%v", f)
+	}
+}

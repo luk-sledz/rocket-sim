@@ -27,4 +27,4 @@
 
 ## Licencja / atrybucja
 
-Raporty NASA NTRS są utworami Rządu Stanów Zjednoczonych dostępnymi do użytku publicznego. W cytowaniu należy podawać numer raportu (np. TN D-7228). Repozytorium implementuje uproszczony model MVP pod soft catch i nie deklaruje zgodności jeden-do-jednego z przywołanymi metodami.
+Raporty NASA NTRS są utworami Rządu Stanów Zjednoczonych dostępnymi do użytku publicznego. W cytowaniu należy podawać numer raportu (np. TN D-7228). Repozytorium implementuje uproszczony model MVP (\(C_d\), \(C_l\) w osiach wiatru) pod soft catch i nie deklaruje zgodności jeden-do-jednego z przywołanymi metodami.

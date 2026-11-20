@@ -128,39 +128,55 @@ func (r *Rocket) DragCoeff() float64 {
 	s := math.Sin(r.AttackAngle())
 	return r.DragCd + (r.DragCd90-r.DragCd)*s*s
 }
-// LiftCoeff zwraca Cl(α). W tym etapie zawsze 0 (bez liftu).
+
+// LiftCoeff zwraca Cl(α) = ½·(Cd90−Cd0)·sin(2α),
+// α znakowane: atan2(û_vel×û_body, û_body·û_vel) ∈ (−π, π].
 func (r *Rocket) LiftCoeff() float64 {
-	return 0
+	speed := r.Vel.Len()
+	if speed == 0 {
+		return 0
+	}
+	bx := math.Sin(r.Angle)
+	by := math.Cos(r.Angle)
+	ux := r.Vel.X / speed
+	uy := r.Vel.Y / speed
+	dot := bx*ux + by*uy
+	cross := ux*by - uy*bx
+	alpha := math.Atan2(cross, dot)
+	return 0.5 * (r.DragCd90 - r.DragCd) * math.Sin(2*alpha)
 }
 
-// AeroForce zwraca siłę aero [N] w osiach świata.
-// Ten etap: tylko drag wzdłuż −Vel (Cl=0).
-// F = −q·Cd·S·û_vel  (+ lift później).
-// Uzasadnienie modelu i źródła: docs/physics/aero.md
-func (r *Rocket) AeroForce() vec.Vec2 {
+// Zwraca siłę dragu [N], Fd = −q·Cd·S·û_vel; 
+
+func (r *Rocket) DragForce() vec.Vec2 {
 	speed := r.Vel.Len()
 	if speed == 0 {
 		return vec.Vec2{}
 	}
-	q := 0.5 * AirDensity * speed * speed // ciśnienie dynamiczne
-	sRef := r.DragArea
-	cd := r.DragCoeff()
-	cl := r.LiftCoeff() // na razie 0
-
-	// drag: przeciwny do Vel
+	q := 0.5 * AirDensity * speed * speed
 	ux := r.Vel.X / speed
 	uy := r.Vel.Y / speed
-	fd := -q * cd * sRef // skalar; kierunek −û_vel
-	fx := fd * ux
-	fy := fd * uy
+	fd := -q * r.DragCoeff() * r.DragArea
+	return vec.Vec2{X: fd * ux, Y: fd * uy}
+}
 
-	// lift: prostopadle do Vel; Cl=0 → zero
-	// û_perp = (−uy, ux) — obrót +90°
-	fl := q * cl * sRef
-	fx += fl * (-uy)
-	fy += fl * ux
+//Zwraca siłę liftu [N], Fl = q·Cl·S·û_perp; û_perp = (−uy, ux).
+func (r *Rocket) LiftForce() vec.Vec2 {
+	speed := r.Vel.Len()
+	if speed == 0 {
+		return vec.Vec2{}
+	}
+	q := 0.5 * AirDensity * speed * speed
+	ux := r.Vel.X / speed
+	uy := r.Vel.Y / speed
+	fl := q * r.LiftCoeff() * r.DragArea
+	return vec.Vec2{X: fl * (-uy), Y: fl * ux}
+}
 
-	return vec.Vec2{X: fx, Y: fy}
+// AeroForce zwraca siłę aero [N] w osiach świata.
+// Uzasadnienie modelu i źródła: docs/physics/aero.md
+func (r *Rocket) AeroForce() vec.Vec2 {
+	return r.DragForce().Add(r.LiftForce())
 }
 
 // Step symuluje kolejny krok symulacji.
