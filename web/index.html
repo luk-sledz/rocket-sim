@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+  <meta charset="utf-8" />
+  <title>rocket-sim</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #log {
+      position: fixed; top: 8px; left: 8px; margin: 0; padding: 6px;
+      color: #fff; font: 12px monospace; background: rgba(0, 0, 0, 0.5);
+    }
+    #ui { position: fixed; bottom: 12px; left: 12px; display: flex; gap: 8px; }
+    #ui button { font: 14px sans-serif; padding: 8px 16px; cursor: pointer; }
+    #status {
+      position: fixed; top: 40%; width: 100%; text-align: center;
+      font: bold 64px sans-serif; color: #fff;
+      text-shadow: 0 0 8px #000; pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- HUD: stan z serwera -->
+  <pre id="log">czekam na serwer...</pre>
+  <div id="status"></div>
+  <div id="ui">
+    <button id="btn-start">Start</button>
+    <button id="btn-pause">Pauza</button>
+    <button id="btn-reset">Reset</button>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>

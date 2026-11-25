@@ -31,7 +31,7 @@ func main() {
 			fd := r.DragForce()
 			fl := r.LiftForce()
 			aero := fd.Add(fl).Len()
-			
+
 			fmt.Printf("t=%5.1fs  X=%7.1f  Y=%7.1f  Vx=%6.2f  Vy=%6.2f  thr=%.2f  fuel=%.0f  angle=%6.2f  gimbal=%.2f  aero=%.2f  Fd=(%8.0f,%8.0f)  Fl=(%8.0f,%8.0f)  Cd=%.2f  Cl=%.2f\n",
 				t, r.Pos.X, r.Pos.Y, r.Vel.X, r.Vel.Y, r.Throttle, r.Fuel, r.Angle, r.GimbalAngle,
 				aero, fd.X, fd.Y, fl.X, fl.Y, r.DragCoeff(), r.LiftCoeff())

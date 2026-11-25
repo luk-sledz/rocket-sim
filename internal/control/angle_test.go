@@ -1,15 +1,16 @@
 package control
+
 import (
-	"testing"
 	"rocket-sim/internal/rocket"
 	"rocket-sim/internal/vec"
+	"testing"
 )
 
 // testuje cały regulator poziomu
 func TestLateralSoftCatch(t *testing.T) {
 	r := rocket.NewStarship(vec.Vec2{X: 30, Y: 200}, vec.Vec2{})
 	dt := 0.01
-	for i := 0; i < 8000; i++ { 
+	for i := 0; i < 8000; i++ {
 		r.Throttle = AltitudeThrottle(
 			r.Pos.Y, r.Vel.Y, rocket.TowerHeight,
 			r.Mass(), r.MaxThrust, r.Angle, dt,
@@ -19,13 +20,14 @@ func TestLateralSoftCatch(t *testing.T) {
 		r.GimbalCmd = AttitudeGimbal(r.Angle, r.AngleCmd, r.AngularVel)
 		r.Step(dt)
 		if r.Caught(5, 5, 2) {
-			return 
+			return
 		}
 	}
 	if !r.Caught(5, 5, 2) {
 		t.Fatalf("X=%.2f Y=%.2f Vx=%.2f Vy=%.2f", r.Pos.X, r.Pos.Y, r.Vel.X, r.Vel.Y)
 	}
 }
+
 // testuje wyliczanie Vx na podstawie odległości od wieży
 func TestLateralDesiredVx(t *testing.T) {
 	// znak: X>0 → VxCmd < 0
@@ -52,7 +54,6 @@ func TestLateralAngleFromVx(t *testing.T) {
 		t.Fatalf("duży błąd → Angle=%v, oczekiwane %v", a, -DefaultMaxTilt)
 	}
 }
-
 
 func TestAttitudeGimbal(t *testing.T) {
 	// chcę kąt większy niż mam → dodatni gimbal

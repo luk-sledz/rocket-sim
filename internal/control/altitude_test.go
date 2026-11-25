@@ -1,9 +1,11 @@
 package control
+
 import (
-	"testing"
 	"rocket-sim/internal/rocket"
 	"rocket-sim/internal/vec"
+	"testing"
 )
+
 func TestAltitudeSoftCatch(t *testing.T) {
 	r := rocket.NewStarship(vec.Vec2{Y: 200}, vec.Vec2{})
 	dt := 0.01

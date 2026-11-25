@@ -1,0 +1,106 @@
+package server
+
+import (
+	"sync"
+	"time"
+
+	"rocket-sim/internal/control"
+	"rocket-sim/internal/rocket"
+	"rocket-sim/internal/vec"
+)
+
+// Session to jedna symulacja: rakieta, czas i flagi, chronione mutexem.
+type Session struct {
+	mu      sync.Mutex
+	r       *rocket.Rocket
+	t       float64
+	running bool
+	caught  bool
+	crashed bool
+}
+
+// newRocket tworzy rakietę z tymi samymi warunkami początkowymi co CLI.
+func newRocket() *rocket.Rocket {
+	pos := vec.Vec2{X: -100, Y: 1000}
+	vel := vec.Vec2{Y: -100}
+	return rocket.NewStarship(pos, vel)
+}
+
+// NewSession tworzy zapauzowaną sesję.
+func NewSession() *Session {
+	return &Session{r: newRocket()}
+}
+
+// Start wznawia symulację, chyba że już się skończyła (caught/crashed).
+func (s *Session) Start() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.caught && !s.crashed {
+		s.running = true
+	}
+}
+
+// Pause zatrzymuje symulację bez zmiany stanu rakiety.
+func (s *Session) Pause() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.running = false
+}
+
+// Reset wraca do warunków początkowych i pauzy.
+func (s *Session) Reset() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.r = newRocket()
+	s.t = 0
+	s.running = false
+	s.caught = false
+	s.crashed = false
+}
+
+// State zwraca kopię stanu do wysłania do przeglądarki.
+func (s *Session) State() StateMsg {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return Snapshot(s.r, s.t, s.caught, s.crashed)
+}
+
+// Tick wykonuje jeden krok symulacji o długości dt [s] i aktualizuje stan.
+func (s *Session) Tick(dt float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.running {
+		return
+	}
+
+	r := s.r
+	r.Throttle = control.AltitudeThrottle(
+		r.Pos.Y, r.Vel.Y, rocket.TowerHeight,
+		r.Mass(), r.MaxThrust, r.Angle, dt,
+	)
+	desiredVx := control.LateralDesiredVx(r.Pos.X)
+	r.AngleCmd = control.LateralAngleFromVx(r.Vel.X, desiredVx)
+	r.GimbalCmd = control.AttitudeGimbal(r.Angle, r.AngleCmd, r.AngularVel)
+	r.Step(dt)
+	s.t += dt
+
+	if r.Caught(rocket.DefaultCatchTolX, rocket.DefaultCatchTolY, rocket.DefaultCatchMaxSpeed) {
+		s.caught = true
+		s.running = false
+		return
+	}
+	if !r.Alive() {
+		s.crashed = true
+		s.running = false
+	}
+}
+
+// Run wywołuje Tick co dt
+func (s *Session) Run(dt float64) {
+	ticker := time.NewTicker(time.Duration(dt * float64(time.Second)))
+	defer ticker.Stop()
+	for range ticker.C {
+		s.Tick(dt)
+	}
+}

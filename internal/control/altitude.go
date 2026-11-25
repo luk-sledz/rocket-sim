@@ -1,13 +1,14 @@
 package control
+
 import "math"
 
 const (
-	DefaultKp            = 0.02  // ile „dokręcić” Throttle na 1 m błędu
-	DefaultKd            = 0.08  // ile „dokręcić” Throttle na 1 m/s prędkości
-	g                    = 9.81 // przyspieszenie ziemskie
+	DefaultKp = 0.02 // ile „dokręcić” Throttle na 1 m błędu
+	DefaultKd = 0.08 // ile „dokręcić” Throttle na 1 m/s prędkości
+	g         = 9.81 // przyspieszenie ziemskie
 )
 
-//thrust musi byc w zakresie 0-1
+// thrust musi byc w zakresie 0-1
 func clamp01(x float64) float64 {
 	if x < 0 {
 		return 0

@@ -1,10 +1,11 @@
 package rocket
 
 import (
-	"testing"
-	"rocket-sim/internal/vec"
 	"math"
+	"rocket-sim/internal/vec"
+	"testing"
 )
+
 // TestStepFreeFall testuje spadek swobodny rakiety
 func TestStepFreeFall(t *testing.T) {
 	r := New(vec.Vec2{Y: 100}, vec.Vec2{}, DefaultDryMass, DefaultFuel, DefaultMaxThrust, DefaultIsp)
@@ -64,7 +65,7 @@ func TestStepThrustAngled(t *testing.T) {
 	}
 }
 
-//testuje znak momentu siły od wychylonego ciągu
+// testuje znak momentu siły od wychylonego ciągu
 func TestStepGimbalTorqueSign(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{})
 	r.Throttle = 1
@@ -81,7 +82,7 @@ func TestStepGimbalTorqueSign(t *testing.T) {
 	}
 }
 
-//testuje czy rakieta nie obraca się gdy gimbal jest 0
+// testuje czy rakieta nie obraca się gdy gimbal jest 0
 func TestStepZeroGimbalNoTorque(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{})
 	r.Throttle = 1
@@ -96,15 +97,15 @@ func TestStepZeroGimbalNoTorque(t *testing.T) {
 	}
 }
 
-// testuje czy przesunięcie gimbala jest ograniczone 
+// testuje czy przesunięcie gimbala jest ograniczone
 func TestStepGimbalRateLimit(t *testing.T) {
 	r := NewStarship(vec.Vec2{Y: 100}, vec.Vec2{})
 	r.GimbalAngle = 0
 	r.GimbalCmd = 0.20 // skok na max
 	dt := 0.01
 	r.Step(dt)
-	maxDelta := DefaultMaxGimbalRate * dt // 0.01
-	if math.Abs(r.GimbalAngle-maxDelta) > 1e-12 { // 
+	maxDelta := DefaultMaxGimbalRate * dt         // 0.01
+	if math.Abs(r.GimbalAngle-maxDelta) > 1e-12 { //
 		t.Fatalf("oczekiwane GimbalAngle=%v, jest %v", maxDelta, r.GimbalAngle)
 	}
 }

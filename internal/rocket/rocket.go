@@ -20,11 +20,11 @@ const (
 	DefaultLeverArm       = 15.0      // m — długość od środka masy do dyszy
 	DefaultMaxGimbalAngle = 0.20      // rad ≈ 11.5° — limit kąta gimbala
 	DefaultMaxGimbalRate  = 1.0       // rad/s prędkość maksymalna gimbala
-	AirDensity      = 1.225 // kg/m³ — ρ na poziomie morza, stałe
-    DefaultDragCd   = 1.0   // opór gdy powietrze napływa na dół rakiety
-	DefaultDragCd90   = 7.08  // Cd przy α = π/2; ≈ Cd0·(450/63.6) przeskalowane dla cylindra (Opór gdy powietrze napływa na bok rakiety)
+	AirDensity            = 1.225     // kg/m³ — ρ na poziomie morza, stałe
+	DefaultDragCd         = 1.0       // opór gdy powietrze napływa na dół rakiety
+	DefaultDragCd90       = 7.08      // Cd przy α = π/2; ≈ Cd0·(450/63.6) przeskalowane dla cylindra (Opór gdy powietrze napływa na bok rakiety)
 
-    DefaultDragArea = 63.6  // m² — przekrój ≈ π·(4.5 m)²
+	DefaultDragArea = 63.6 // m² — przekrój ≈ π·(4.5 m)²
 )
 
 // Rocket to stan rakiety w symulacji 2D (jednostki SI).
@@ -43,9 +43,9 @@ type Rocket struct {
 	Inertia     float64  // I
 	LeverArm    float64  // L — dźwignia od środka masy do dyszy
 	GimbalCmd   float64  // żądany kąt gimbala [rad]
-	DragCd   float64 // współczynnik oporu Cd
-	DragCd90 float64 // Cd przy napływie z boku (α = π/2)
-	DragArea float64 // powierzchnia odniesienia A [m²]
+	DragCd      float64  // współczynnik oporu Cd
+	DragCd90    float64  // Cd przy napływie z boku (α = π/2)
+	DragArea    float64  // powierzchnia odniesienia A [m²]
 }
 
 func clamp(x, lo, hi float64) float64 {
@@ -105,7 +105,7 @@ func (r *Rocket) Alive() bool {
 	return r.Pos.Y > 0
 }
 
-// Zwraca kąt z którego napływa powietrze na rakietę 
+// Zwraca kąt z którego napływa powietrze na rakietę
 func (r *Rocket) AttackAngle() float64 {
 	speed := r.Vel.Len()
 	if speed == 0 {
@@ -115,11 +115,11 @@ func (r *Rocket) AttackAngle() float64 {
 	bx := math.Sin(r.Angle)
 	by := math.Cos(r.Angle)
 	// kierunek ruchu
-	ux := r.Vel.X / speed 
-	uy := r.Vel.Y / speed 
-	dot := bx*ux + by*uy // iloczyn skalarny wektorów b i u (a·b = cosα) 
+	ux := r.Vel.X / speed
+	uy := r.Vel.Y / speed
+	dot := bx*ux + by*uy    // iloczyn skalarny wektorów b i u (a·b = cosα)
 	dot = clamp(dot, -1, 1) // ochrona przed acos NaN z błędów float
-	return math.Acos(dot) // rad — kąt między dziobem kadłuba a kierunkiem Vel
+	return math.Acos(dot)   // rad — kąt między dziobem kadłuba a kierunkiem Vel
 }
 
 // DragCoeff zwraca Cd(α): Cd0 + (Cd90−Cd0)·sin²(α).
@@ -146,7 +146,7 @@ func (r *Rocket) LiftCoeff() float64 {
 	return 0.5 * (r.DragCd90 - r.DragCd) * math.Sin(2*alpha)
 }
 
-// Zwraca siłę dragu [N], Fd = −q·Cd·S·û_vel; 
+// Zwraca siłę dragu [N], Fd = −q·Cd·S·û_vel;
 
 func (r *Rocket) DragForce() vec.Vec2 {
 	speed := r.Vel.Len()
@@ -160,7 +160,7 @@ func (r *Rocket) DragForce() vec.Vec2 {
 	return vec.Vec2{X: fd * ux, Y: fd * uy}
 }
 
-//Zwraca siłę liftu [N], Fl = q·Cl·S·û_perp; û_perp = (−uy, ux).
+// Zwraca siłę liftu [N], Fl = q·Cl·S·û_perp; û_perp = (−uy, ux).
 func (r *Rocket) LiftForce() vec.Vec2 {
 	speed := r.Vel.Len()
 	if speed == 0 {
@@ -199,8 +199,8 @@ func (r *Rocket) Step(dt float64) {
 
 	// 1a) GimbalAngle dogania GimbalCmd z limitem rate
 	gimbalCmd := clamp(r.GimbalCmd, -DefaultMaxGimbalAngle, DefaultMaxGimbalAngle) //ograniczenie żądanego kąta gimbala do max i min
-	maxDelta := DefaultMaxGimbalRate * dt // maksymalny przyrost kąta gimbala w jednym kroku
-	delta := gimbalCmd - r.GimbalAngle // błąd kąta gimbala
+	maxDelta := DefaultMaxGimbalRate * dt                                          // maksymalny przyrost kąta gimbala w jednym kroku
+	delta := gimbalCmd - r.GimbalAngle                                             // błąd kąta gimbala
 	if delta > maxDelta {
 		delta = maxDelta
 	} else if delta < -maxDelta {
