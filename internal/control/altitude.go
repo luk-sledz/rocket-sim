@@ -20,7 +20,7 @@ func clamp01(x float64) float64 {
 }
 
 // AltitudeThrottle liczy zadanie ciągu dla jednej pętli wysokości.
-// posY, velY — stan; target — np. 90 m; dt — na razie nieużywane.
+// posY, velY — stan; target — np. 125 m (rocket.TowerHeight); dt — na razie nieużywane.
 func AltitudeThrottle(posY, velY, target, mass, maxThrust, angle, dt float64) float64 {
 	_ = dt
 	hover := mass * g / (maxThrust * math.Cos(angle))

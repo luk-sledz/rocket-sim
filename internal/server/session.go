@@ -15,8 +15,12 @@ type Session struct {
 	r       *rocket.Rocket
 	t       float64
 	running bool
-	caught  bool
-	crashed bool
+	// catching: w oknie chwytu (ramiona się zamykają); fizyka i regulatory dalej działają.
+	// hold = czas ciągle w oknie; po CatchHoldTime → caught i stop.
+	catching bool
+	hold     float64
+	caught   bool
+	crashed  bool
 }
 
 // newRocket tworzy rakietę z tymi samymi warunkami początkowymi co CLI.
@@ -54,6 +58,8 @@ func (s *Session) Reset() {
 	s.r = newRocket()
 	s.t = 0
 	s.running = false
+	s.catching = false
+	s.hold = 0
 	s.caught = false
 	s.crashed = false
 }
@@ -62,7 +68,7 @@ func (s *Session) Reset() {
 func (s *Session) State() StateMsg {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return Snapshot(s.r, s.t, s.caught, s.crashed)
+	return Snapshot(s.r, s.t, s.catching, s.caught, s.crashed)
 }
 
 // Tick wykonuje jeden krok symulacji o długości dt [s] i aktualizuje stan.
@@ -70,11 +76,12 @@ func (s *Session) Tick(dt float64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if !s.running {
+	if !s.running || s.caught {
 		return
 	}
 
 	r := s.r
+	// Regulatory i Step działają aż do caught — także podczas zamykania ramion.
 	r.Throttle = control.AltitudeThrottle(
 		r.Pos.Y, r.Vel.Y, rocket.TowerHeight,
 		r.Mass(), r.MaxThrust, r.Angle, dt,
@@ -85,14 +92,25 @@ func (s *Session) Tick(dt float64) {
 	r.Step(dt)
 	s.t += dt
 
-	if r.Caught(rocket.DefaultCatchTolX, rocket.DefaultCatchTolY, rocket.DefaultCatchMaxSpeed) {
-		s.caught = true
-		s.running = false
-		return
-	}
 	if !r.Alive() {
 		s.crashed = true
 		s.running = false
+		s.catching = false
+		s.hold = 0
+		return
+	}
+
+	// 3 s ciągle w oknie → caught (stop). Wypadnięcie z okna zeruje licznik.
+	if r.Caught(rocket.DefaultCatchTolX, rocket.DefaultCatchTolY, rocket.DefaultCatchMaxSpeed) {
+		s.catching = true
+		s.hold += dt
+		if s.hold >= rocket.CatchHoldTime {
+			s.caught = true
+			s.running = false
+		}
+	} else {
+		s.catching = false
+		s.hold = 0
 	}
 }
 

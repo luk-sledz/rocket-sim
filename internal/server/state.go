@@ -14,12 +14,13 @@ type StateMsg struct {
 	Throttle float64 `json:"throttle"` // 0..1
 	Fuel     float64 `json:"fuel"`     // paliwo [kg]
 	Aero     float64 `json:"aero"`     // |siła aero| [N]
+	Catching bool    `json:"catching"` // w oknie chwytu, ramiona się zamykają
 	Caught   bool    `json:"caught"`
 	Crashed  bool    `json:"crashed"`
 }
 
 // Snapshot wysyła stan symulacji do przeglądarki.
-func Snapshot(r *rocket.Rocket, t float64, caught, crashed bool) StateMsg {
+func Snapshot(r *rocket.Rocket, t float64, catching, caught, crashed bool) StateMsg {
 	return StateMsg{
 		T:        t,
 		X:        r.Pos.X,
@@ -31,6 +32,7 @@ func Snapshot(r *rocket.Rocket, t float64, caught, crashed bool) StateMsg {
 		Throttle: r.Throttle,
 		Fuel:     r.Fuel,
 		Aero:     r.AeroForce().Len(),
+		Catching: catching,
 		Caught:   caught,
 		Crashed:  crashed,
 	}

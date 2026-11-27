@@ -7,24 +7,31 @@ import (
 
 // Domyślne parametry (Starship przy lądowaniu, ~3 Raptory).
 const (
-	G                     = 9.81
-	DefaultDryMass        = 1.2e5     // kg (~120 t)
-	DefaultFuel           = 3.0e4     // kg — zapas paliwana hamowanie, nie pełny tank
-	DefaultMaxThrust      = 3 * 2.3e6 // N — ~3 × Raptor
-	DefaultIsp            = 330.0     // s — ile ciągu z 1 kg paliwa (Raptor, atmosfera)
-	TowerHeight           = 90.0      // wysokość ramion wieży chwytającej [m]
-	DefaultCatchTolY      = 0.5       // zakres tolerancji w Y podczas catch
-	DefaultCatchTolX      = 0.5       // zakres tolerancji w X podczas catch
-	DefaultCatchMaxSpeed  = 1.0       // m/s — |Vel.Y|
-	DefaultInertia        = 2.5e7     // kg·m² ≈ m·L²/12; m~120 t, L~50 m(przybliżenie)
-	DefaultLeverArm       = 15.0      // m — długość od środka masy do dyszy
-	DefaultMaxGimbalAngle = 0.20      // rad ≈ 11.5° — limit kąta gimbala
-	DefaultMaxGimbalRate  = 1.0       // rad/s prędkość maksymalna gimbala
-	AirDensity            = 1.225     // kg/m³ — ρ na poziomie morza, stałe
-	DefaultDragCd         = 1.0       // opór gdy powietrze napływa na dół rakiety
-	DefaultDragCd90       = 7.08      // Cd przy α = π/2; ≈ Cd0·(450/63.6) przeskalowane dla cylindra (Opór gdy powietrze napływa na bok rakiety)
+	// Stałe środowiskowe
+	G          = 9.81  // m/s² — przyspieszenie ziemskie
+	AirDensity = 1.225 // kg/m³ — ρ powietrza na poziomie morza (stałe)
 
-	DefaultDragArea = 63.6 // m² — przekrój ≈ π·(4.5 m)²
+	// Rakieta — masa, napęd i sterowanie
+	DefaultDryMass        = 1.2e5     // kg (~120 t)
+	DefaultFuel           = 3.0e4     // kg — zapas paliwa na hamowanie, nie pełny zbiornik
+	DefaultMaxThrust      = 3 * 2.3e6 // N — ~3 × Raptor
+	DefaultIsp            = 330.0     // s — impuls właściwy (Raptor, atmosfera)
+	DefaultInertia        = 2.5e7     // kg·m² ≈ m·L²/12; m ~ 120 t, L ~ 50 m (przybliżenie)
+	DefaultLeverArm       = 15.0      // m — odległość od środka masy do dyszy
+	DefaultMaxGimbalAngle = 0.20      // rad (≈ 11.5°) — limit wychylenia gimbala
+	DefaultMaxGimbalRate  = 1.0       // rad/s — maksymalna prędkość kątowa gimbala
+
+	// Rakieta — aerodynamika
+	DefaultDragCd   = 1.0  // Cd przy α = 0 (opór osiowy przy napływie od spodu rakiety)
+	DefaultDragCd90 = 7.08 // Cd przy α = π/2 ≈ Cd0·(450/63.6) (opór boczny cylindra)
+	DefaultDragArea = 63.6 // m² — pole przekroju poprzecznego ≈ π·(4.5 m)²
+
+	// Wieża chwytająca (Mechazilla) — geometria i kryteria przechwytu
+	TowerHeight          = 125.0 // m — wysokość ramion wieży chwytającej (wieża 140 m)
+	DefaultCatchTolX     = 1.5   // m — tolerancja pozycji w osi X podczas przechwytu
+	DefaultCatchTolY     = 1.5   // m — tolerancja pozycji w osi Y podczas przechwytu
+	DefaultCatchMaxSpeed = 1.0   // m/s — maksymalna dopuszczalna prędkość opadania |Vel.Y|
+	CatchHoldTime        = 3.0   // s — czas ciągłego przebywania w oknie do catch (ramiona się zamykają)
 )
 
 // Rocket to stan rakiety w symulacji 2D (jednostki SI).

@@ -35,7 +35,7 @@ func TestCaught(t *testing.T) {
 	// OK: przy ramionach, prawie stoi
 	r := NewStarship(vec.Vec2{Y: TowerHeight}, vec.Vec2{})
 	if !r.Caught(2, 2, 1) {
-		t.Fatal("Y=90, Vel=0 → powinno być Caught")
+		t.Fatal("Y=TowerHeight, Vel=0 → powinno być Caught")
 	}
 	// za nisko
 	r.Pos.Y = 50
